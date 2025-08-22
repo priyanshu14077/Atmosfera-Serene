@@ -1,0 +1,121 @@
+# .cursorrules — Atmosfera Serene (Iterative, PRD-aligned)
+
+Atmosfera Serene is an **open-source air-quality dashboard** (Next.js + Express + Prisma/Postgres + Leaflet + Chart.js + Forecasting via Prophet/ARIMA). This file ensures that every Cursor-generated change aligns with the **Product Requirements Document (PRD)** while encouraging iterative development with clarifying questions.
+
+---
+
+## 0) Iterative Workflow
+- Cursor should **not assume missing details**. Always:
+  1. Check if PRD context is clear.
+  2. If unclear, ask a specific question (e.g. “Should forecast caching be in DB or in-memory?”).
+  3. Then propose code aligned with clarified requirements.
+- For large features, generate stepwise: **tests → schema/contracts → implementation → docs**.
+- If a feature touches multiple subsystems (e.g. auth + DB), ask: *“Do you want to scaffold both at once, or one at a time?”*
+
+---
+
+## 1) Product Context (from PRD)
+- **App name:** Atmosfera Serene
+- **Core value:** Enable users to visualize, analyze, and forecast air quality data.
+- **Features (MVP priority order):**
+  1. Authentication (NextAuth.js with OAuth/email)
+  2. Data fetching from OpenAQ API
+  3. Caching via Prisma + PostgreSQL
+  4. Map rendering (Leaflet + React)
+  5. Charts (Chart.js time-series)
+  6. Forecasting (Prophet/ARIMA backend service)
+  7. CI/CD pipelines (Vercel + Railway + GitHub Actions)
+
+Cursor: Keep deliverables aligned with this priority unless user explicitly reorders.
+
+---
+
+## 2) Tech Stack & Architecture Rules
+- **Frontend:** Next.js 14 (App Router), hosted on Vercel.
+- **Auth:** NextAuth.js, Google/GitHub OAuth, secure cookies. Secrets via env only.
+- **Backend:** Express.js, Prisma ORM, PostgreSQL (Railway hosted).
+- **Data:** OpenAQ v3 API, cached in DB with TTL.
+- **Visualization:** React-Leaflet + Chart.js (react-chartjs-2).
+- **Forecasting:** Python (Prophet/ARIMA) service or subprocess.
+- **CI/CD:** GitHub → Vercel (frontend), GitHub → Railway (backend + DB).
+- **Observability:** Logs, errors surfaced clearly. Optional: extend with OpenTelemetry.
+
+---
+
+## 3) Coding & Iteration Conventions
+- **TypeScript strict** everywhere.
+- **Validation:** Use zod or Joi for inputs (query params, API payloads).
+- **Errors:** Return structured Problem JSON (`status`, `title`, `detail`).
+- **Database:** Prisma migrations checked in; no raw SQL unless justified.
+- **Security:** No secrets in code, always in env vars (NEXTAUTH_SECRET, OPENAQ_API_KEY, DATABASE_URL, etc.).
+- **Frontend state:** Minimal client state; prefer server data as source of truth.
+- **Accessibility:** WCAG 2.2 AA for map and charts.
+
+---
+
+## 4) Testing Strategy
+- **Unit tests:** Vitest/Jest for utilities.
+- **Integration:** Supertest for Express routes + Testcontainers for Postgres.
+- **E2E:** Playwright (auth flow, dashboard load, charts render).
+- **Forecasting:** Mock Prophet/ARIMA output for determinism in CI.
+- Ask before generating: *“Should I mock external APIs (OpenAQ, Auth) or integrate live?”*
+
+---
+
+## 5) Feature-specific Rules
+### Authentication
+- Protect both frontend routes and backend endpoints.
+- Default to NextAuth’s secure defaults (HttpOnly, SameSite cookies).
+- Ask: *“Do we persist users in Postgres or keep session-only?”*
+
+### Data Fetch (OpenAQ)
+- Always proxy through Express (never expose API key).
+- Add rate-limit handling (429 → retry with backoff).
+- Ask: *“Should cache invalidation be time-based (TTL) or event-based?”*
+
+### Caching
+- Schema must align with PRD’s Station + Measurement models.
+- Data freshness: default 1h TTL.
+- Ask: *“Do we need versioned historical data storage or overwrite latest?”*
+
+### Map (Leaflet)
+- Client-only (ssr: false). Use markers with popups.
+- Ask: *“Do we include user geolocation or fixed region default?”*
+
+### Charts (Chart.js)
+- Line chart with time-series pollutant values.
+- Handle empty datasets gracefully.
+- Ask: *“Should multiple pollutants be compared in one chart?”*
+
+### Forecasting (Prophet/ARIMA)
+- Python microservice preferred over child_process for scalability.
+- Cache results in DB to avoid recompute.
+- Ask: *“Forecast horizon (e.g. 7 days) and refresh schedule?”*
+
+### CI/CD
+- Vercel: auto-preview per PR.
+- Railway: auto-deploy on merge to main, migrations run automatically.
+- Ask: *“Should we add staging env before prod?”*
+
+---
+
+## 6) Iterative Q&A Prompts
+Cursor should default to asking these when unclear:
+1. Which step of the PRD are we implementing now?
+2. Should I scaffold minimal code first (skeleton), or production-ready with tests/docs?
+3. For external services (OpenAQ, Railway DB, Prophet), do we mock or integrate live?
+4. Should I generate migration + schema docs alongside API code?
+5. Do we need feature flags for partial rollouts?
+
+---
+
+## 7) Output Expectations
+- Code must include:
+  - Comments explaining rationale.
+  - Tests (unless explicitly skipped).
+  - Readme/docs update when introducing new env vars or services.
+- If PRD requirement conflicts with suggestion, ask first.
+
+---
+
+# End of Iterative Cursor Rules
